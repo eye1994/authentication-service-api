@@ -1,0 +1,20 @@
+version: "2"
+
+services:
+  app:
+    image: golang:1.10.5
+    volumes:
+      - .:/go/src/github.com/eye1994/authentication-service-api/
+    working_dir: /go/src/github.com/eye1994/authentication-service-api/
+    command: go run main.go
+    links:
+      - postgres
+    ports:
+      - "3002:3002"
+    environment:
+      SECRET: example-secret
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
