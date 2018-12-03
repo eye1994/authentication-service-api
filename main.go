@@ -1,13 +1,13 @@
 package main
 
 import (
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/eye1994/authentication-service-api/administrator"
 	"github.com/eye1994/authentication-service-api/repository"
 	"github.com/eye1994/authentication-service-api/utils"
-	jwtmiddleware "github.com/iris-contrib/middleware/jwt"
 	"github.com/kataras/iris"
 	"github.com/kataras/iris/context"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 func myHandler(ctx iris.Context) {
@@ -15,28 +15,26 @@ func myHandler(ctx iris.Context) {
 
 }
 
-// NewApp with()
-func NewApp() *iris.Application {
-	app := iris.New()
+// EchoHandler with()
+func EchoHandler() *echo.Echo {
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.POST("/administrator", administrator.Register)
+	e.POST("/administrator/login", administrator.Login)
 
-	jwtHandler := jwtmiddleware.New(jwtmiddleware.Config{
-		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-			return utils.JwtSecretKey, nil
-		},
-		SigningMethod: jwt.SigningMethodHS256,
-	})
+	g := e.Group("/administrator/profile")
+	g.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		SigningKey:  utils.JwtSecretKey,
+		TokenLookup: "header:Authorization",
+	}))
+	g.GET("", administrator.Profile)
 
-	app.Post("/administrator", administrator.Register)
-	app.Post("/administrator/login", administrator.Login)
-	app.Use(jwtHandler.Serve)
-	app.Get("/administrator/profile", administrator.Profile)
-
-	app.Run(iris.Addr("0.0.0.0:3002"))
-
-	return app
+	return e
 }
 
 func main() {
 	defer repository.DB.Close()
-	NewApp()
+	app := EchoHandler()
+	app.Start(":3002")
 }

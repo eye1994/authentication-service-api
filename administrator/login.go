@@ -1,43 +1,36 @@
 package administrator
 
 import (
+	"net/http"
+
 	"github.com/eye1994/authentication-service-api/repository"
 	"github.com/eye1994/authentication-service-api/utils"
-	"github.com/kataras/iris"
-	"github.com/kataras/iris/context"
+	"github.com/labstack/echo"
 )
 
 // Login with()
-func Login(ctx iris.Context) {
-	params := &repository.LoginAdministratorParams{}
-	err := ctx.ReadJSON(params)
-	if err != nil {
-		ctx.JSON(err.Error())
+func Login(c echo.Context) (err error) {
+	params := new(repository.LoginAdministratorParams)
+	if err = c.Bind(params); err != nil {
 		return
 	}
 
 	var administrator repository.Administrator
 	result := repository.DB.Where(&repository.Administrator{Email: params.Email}).First(&administrator)
 	if result.Error != nil && result.RecordNotFound() {
-		ctx.StatusCode(iris.StatusUnauthorized)
-		ctx.JSON(context.Map{"error": "Invalid email or password"})
-		return
+		return c.JSON(http.StatusUnauthorized, &utils.ErrorMessage{Error: "Invalid email or password"})
 	}
 
 	ok, err := utils.ValidatePassword(params.Password, []byte(administrator.PasswordHash))
 	if !ok {
-		ctx.StatusCode(iris.StatusUnauthorized)
-		ctx.JSON(context.Map{"error": "Invalid email or password"})
-		return
+		return c.JSON(http.StatusUnauthorized, &utils.ErrorMessage{Error: "Invalid email or password"})
 	}
 
 	tokenString, error := utils.SignJwt(int(administrator.ID))
 	if error != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(error.Error())
-		return
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	ctx.Header("Auhtnetication", tokenString)
-	ctx.JSON(administrator)
+	c.Response().Header().Set("Authorization", tokenString)
+	return c.JSON(http.StatusOK, administrator)
 }

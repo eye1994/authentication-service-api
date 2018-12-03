@@ -1,34 +1,32 @@
 package administrator
 
 import (
+	"net/http"
+
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/eye1994/authentication-service-api/repository"
-	"github.com/kataras/iris"
-	"github.com/kataras/iris/context"
+	"github.com/eye1994/authentication-service-api/utils"
+	"github.com/labstack/echo"
 )
 
 // Profile with()
-func Profile(ctx iris.Context) {
-	token := ctx.Values().Get("jwt").(*jwt.Token)
+func Profile(c echo.Context) (err error) {
+	token := c.Get("user").(*jwt.Token)
 	if token.Valid != true {
-		ctx.JSON(context.Map{"error": "Invalid token"})
-		return
+		return c.String(http.StatusUnauthorized, "Invalid token")
 	}
 
 	ID, ok := token.Claims.(jwt.MapClaims)["ID"].(float64)
 	if !ok {
-		ctx.JSON(context.Map{"error": "Invalid token"})
-		return
+		return c.JSON(http.StatusUnauthorized, &utils.ErrorMessage{Error: "Invalid token"})
 	}
 
 	var administrator repository.Administrator
 	search := &repository.Administrator{ID: uint(ID)}
 	result := repository.DB.Where(search).First(&administrator)
 	if result.Error != nil && result.RecordNotFound() {
-		ctx.StatusCode(iris.StatusUnauthorized)
-		ctx.JSON(context.Map{"error": "Invalid token"})
-		return
+		return c.JSON(http.StatusUnauthorized, &utils.ErrorMessage{Error: "Invalid token"})
 	}
 
-	ctx.JSON(administrator)
+	return c.JSON(http.StatusOK, administrator)
 }
