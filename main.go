@@ -4,6 +4,7 @@ import (
 	"github.com/eye1994/authentication-service-api/administrator"
 	"github.com/eye1994/authentication-service-api/application"
 	"github.com/eye1994/authentication-service-api/repository"
+	user "github.com/eye1994/authentication-service-api/users"
 	"github.com/kataras/iris"
 	"github.com/kataras/iris/context"
 	"github.com/labstack/echo"
@@ -23,6 +24,7 @@ func EchoHandler() *echo.Echo {
 
 	administrator.Handlers(e)
 	application.Handlers(e)
+	user.Handlers(e)
 
 	return e
 }

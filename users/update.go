@@ -1,4 +1,4 @@
-package application
+package user
 
 import (
 	"net/http"
@@ -10,9 +10,9 @@ import (
 
 // Update with()
 func Update(c echo.Context) (err error) {
-	application := c.Get("Application").(*repository.Application)
+	user := c.Get("ApplicationUser").(*repository.User)
 
-	params := new(repository.ApplicationParams)
+	params := new(repository.UserParams)
 	if err = c.Bind(params); err != nil {
 		return
 	}
@@ -22,10 +22,15 @@ func Update(c echo.Context) (err error) {
 		return c.JSON(http.StatusUnprocessableEntity, err.(validator.ErrorMap))
 	}
 
-	updateResult := repository.DB.Model(&application).Updates(params)
+	userUpdate, err := params.ToModel()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	updateResult := repository.DB.Model(&user).Updates(userUpdate)
 	if updateResult.Error != nil {
 		return c.JSON(http.StatusUnprocessableEntity, updateResult.Error)
 	}
 
-	return c.JSON(http.StatusOK, application)
+	return c.JSON(http.StatusOK, user)
 }
