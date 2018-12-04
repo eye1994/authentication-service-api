@@ -23,47 +23,16 @@ type Administrator struct {
 
 // RegisterAdministratorParams with()
 type RegisterAdministratorParams struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
+	FirstName string `json:"first_name" validate:"nonzero"`
+	LastName  string `json:"last_name" validate:"nonzero"`
+	Email     string `json:"email" validate:"nonzero"`
+	Password  string `json:"password" validate:"min=6"`
 }
 
 // LoginAdministratorParams with()
 type LoginAdministratorParams struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
-}
-
-// Validate valdiates the structures and returns an ValidationError type
-func (a *RegisterAdministratorParams) Validate() (bool, ValidationError) {
-	errors := make(ValidationError)
-
-	if IsEmpty(a.FirstName) {
-		errors["first_name"] = []string{"is required"}
-	}
-
-	if IsEmpty(a.LastName) {
-		errors["last_name"] = []string{"is required"}
-	}
-
-	if IsEmpty(a.Email) {
-		errors["email"] = []string{"is required"}
-	}
-
-	if !IsEmail(a.Email) {
-		errors["email"] = []string{"is invalid email"}
-	}
-
-	if len(a.Password) < 6 {
-		errors["password"] = []string{"should be at least 6 characters"}
-	}
-
-	if len(errors) == 0 {
-		return true, nil
-	}
-
-	return false, errors
 }
 
 // ToModel with()
