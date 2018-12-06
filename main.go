@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/eye1994/authentication-service-api/administrator"
 	"github.com/eye1994/authentication-service-api/application"
 	"github.com/eye1994/authentication-service-api/external"
@@ -20,6 +22,10 @@ func myHandler(ctx iris.Context) {
 // EchoHandler with()
 func EchoHandler() *echo.Echo {
 	e := echo.New()
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+	}))
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
